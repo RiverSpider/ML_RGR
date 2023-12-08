@@ -144,7 +144,6 @@ for airport in airporttos:
         
 X = df.values.flatten()
 X = X.reshape(1, -1)
-st.header(X.shape)
 button_clicked = st.button("Предсказать")
 
 if button_clicked:
