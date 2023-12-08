@@ -27,6 +27,7 @@ from sklearn.metrics import (
 )
 from sklearn.cluster import DBSCAN
 import tensorflow as tf
+import pickle
 
 
 def Teacher():
@@ -159,94 +160,50 @@ if uploaded_file is not None:
         if selected_model == "k-NN":
             X_train = np.array(X_train, order='C')
             y_train = np.array(y_train, order='C')
-            knn = KNeighborsClassifier()
-            param_grid_knn = {'n_neighbors': [100, 1001, 300]}
-            grid_search_knn = GridSearchCV(knn, param_grid=param_grid_knn, cv=5)
-            grid_search_knn.fit(X_train, y_train)
-            best_knn = grid_search_knn.best_estimator_
-            Prediction(best_knn)
+            with open('models/knn_model.pkl', 'rb') as file:
+                loaded_knn_model = pickle.load(file)
+            Prediction(loaded_knn_model)
         elif selected_model == "Logistic Regression":
-            lr = LogisticRegression(max_iter=1000)
-            penalty = ['l1', 'l2']
-            param_grid_lr = {'C': [0.001, 0.01, 0.1, 1, 10, 100]}
-            lr_grid = GridSearchCV(lr, param_grid=param_grid_lr, cv=5)
-            lr_grid.fit(X_train, y_train)
-            lr = lr_grid.best_estimator_
-            Prediction(lr)
+            with open('models/lr_model.pkl', 'rb') as file:
+                lr_model = pickle.load(file)
+            Prediction(lr_model)
         elif selected_model == "SVM":
-            svm = SVC()
-            svm.fit(X_train, y_train)
-            Prediction(svm)
+            with open('models/svm_model.pkl', 'rb') as file:
+                svm_model = pickle.load(file)
+            Prediction(svm_model)
         elif selected_model == "CART":
-            #with open('../models/CART.pkl', 'rb') as file:
-                #CART = pickle.load(file)
-            classifier = DecisionTreeClassifier()
-
-            param_dist = {
-                "criterion": ["gini", "entropy"],
-                "max_depth": randint(1, 4),
-                "min_samples_split": randint(2, 20),
-                "min_samples_leaf": randint(1, 10)
-            }
-
-            clf_random_search = RandomizedSearchCV(classifier, param_distributions=param_dist, n_iter=10, cv=5, random_state=42)
-            clf_random_search.fit(X_train, y_train)
-
-            CART = clf_random_search.best_estimator_
-            Prediction(CART)
+            with open('models/CART_model.pkl', 'rb') as file:
+                CART_model = pickle.load(file)
+            Prediction(CART_model)
         elif selected_model == "KMeans":
-            kmeans = KMeans(n_init=10, random_state=42) 
-            parameters = {'n_clusters': [2, 3, 4, 5]}
-            grid_search = GridSearchCV(kmeans, parameters)
-            grid_search.fit(X)
-            best_kmeans = grid_search.best_estimator_
-            PredictionClaster(best_kmeans)
+            with open('models/KMeans_model.pkl', 'rb') as file:
+                KMeans_model = pickle.load(file)
+            Prediction(KMeans_model)
         elif selected_model == "DBSCAN":
-            best_dbscan = DBSCAN(eps=0.1, min_samples=2)
-            y_pred = best_dbscan.fit_predict(X)
+            with open('models/DBSCAN_model.pkl', 'rb') as file:
+                DBSCAN_model = pickle.load(file)
+            y_pred = DBSCAN_model.fit_predict(X)
             st.write("Silhouette Score:", silhouette_score(X, y_pred))
             st.write("Calinski-Harabasz Score:", calinski_harabasz_score(X, y_pred))
             st.write("Davies-Bouldin Score:", davies_bouldin_score(X, y_pred))
             st.write("Adjusted Rand Index:", adjusted_rand_score(y, y_pred))
             st.write("Completeness Score:", completeness_score(y, y_pred))
         elif selected_model == "Bagging":
-            bagging = BaggingClassifier(estimator=DecisionTreeClassifier(), n_estimators=10)
-            bagging.fit(X_train, y_train)
-            Prediction(bagging)
+            with open('models/bagging_model.pkl', 'rb') as file:
+                bagging_model = pickle.load(file)
+            Prediction(bagging_model)
         elif selected_model == "Gradient Boosting":
-            gradient_boosting = GradientBoostingClassifier()
-            gradient_boosting.fit(X_train, y_train)
-            Prediction(gradient_boosting)
+            with open('models/gradient_model.pkl', 'rb') as file:
+                gradient_model = pickle.load(file)
+            Prediction(gradient_model)
         elif selected_model == "Stacking":
-            bagging_classifier = BaggingClassifier(estimator=DecisionTreeClassifier(), n_estimators=10)
-            gradient_boosting_classifier = GradientBoostingClassifier()
-            stacking_classifier = StackingClassifier(
-                estimators=[('bagging', bagging_classifier), ('gb', gradient_boosting_classifier)],
-                final_estimator=LogisticRegression()
-            )
-            stacking_classifier.fit(X_train, y_train)
-            Prediction(stacking_classifier)
+            with open('models/stacking_model.pkl', 'rb') as file:
+                stacking_model = pickle.load(file)
+            Prediction(stacking_model)
         elif selected_model == "NN":
-            model_classification = tf.keras.Sequential(
-                [
-                    tf.keras.layers.Dense(64, activation="relu", input_shape=(608,)),
-                    tf.keras.layers.Dense(128, activation="relu"),
-                    tf.keras.layers.Dropout(0.05),
-                    tf.keras.layers.Dense(64, activation="relu"),
-                    tf.keras.layers.Dense(32, activation="relu"),
-                    tf.keras.layers.Dense(16, activation="relu"),
-                    # используем 1 нейрон и sigmoid
-                    tf.keras.layers.Dense(1, activation="sigmoid"),
-                ]
-            )
-            X_train = X_train.astype('float32')
-            y_train = y_train.astype('float32')
-            # в качестве функции активации используется бинарная  кроссэнтропия
-            model_classification.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
-                             loss="binary_crossentropy",
-                             metrics=[tf.keras.metrics.BinaryAccuracy(), tf.keras.metrics.Precision(), tf.keras.metrics.Recall(), tf.keras.metrics.AUC(), tf.keras.metrics.F1Score()])
-            model_classification.fit(X_train, y_train, epochs=100, verbose=None)
+            from tensorflow.keras.models import load_model
+            model = load_model('models/NN_model.h5')
             X_test = X_test.astype('float32')
             y_test = y_test.astype('float32')
-            Prediction(model_classification)
+            Prediction(model)
             
